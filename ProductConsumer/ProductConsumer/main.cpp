@@ -4,10 +4,10 @@
 #include <condition_variable>
 
 std::condition_variable consumerFlag;
-std::mutex consumerMutex;
-
 std::condition_variable producerFlag;
-std::mutex producerMutex;
+std::mutex mutex;
+
+
 
 
 int counter = 0;
@@ -15,16 +15,16 @@ bool done = false;
 
 std::queue<int> goods;
 
-void producer() 
+void producer()
 {
-	
+
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	producerFlag.notify_all();
+	producerFlag.notify_one();
 	std::cout << "Starting producer..." << std::endl;
 
-	std::unique_lock<std::mutex> lock(producerMutex);
+	std::unique_lock<std::mutex> lock(mutex);
 
-	for (int i = 0; i < 500; ++i) 
+	for (int i = 0; i < 500; ++i)
 	{
 		goods.push(i);
 		counter++;
@@ -33,31 +33,22 @@ void producer()
 		producerFlag.wait(lock);
 	}
 	consumerFlag.notify_one();
-
+	std::cout << "Finished producer..." << std::endl;
 
 	done = true;
 
-
-
-	std::cout << "Finished producer..." << std::endl;
 }
 
-void consumer() 
+void consumer()
 {
 	std::cout << "Starting consumer..." << std::endl;
-	
-	
+
+
 	while (!done)
 	{
-
-		if (done == true)
-		{
-			std::cout << "done is true" << std::endl;
-		}
-
 		std::cout << "Consumer waiting..." << std::endl;
 		producerFlag.notify_one();
-		std::unique_lock<std::mutex> lock(consumerMutex);
+		std::unique_lock<std::mutex> lock(mutex);
 		while (!goods.empty())
 		{
 			goods.pop();
@@ -66,15 +57,12 @@ void consumer()
 
 			producerFlag.notify_one();
 			consumerFlag.wait(lock);
-			
 		}
-		
 	}
-
 	std::cout << "Finished consumer..." << std::endl;
 }
 
-int main() 
+int main()
 {
 	counter = 0;
 	std::thread producerThread(producer);
