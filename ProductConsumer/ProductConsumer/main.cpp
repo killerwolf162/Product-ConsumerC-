@@ -17,9 +17,7 @@ std::queue<int> goods;
 
 void producer()
 {
-
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	producerFlag.notify_one();
 	std::cout << "Starting producer..." << std::endl;
 
 	std::unique_lock<std::mutex> lock(mutex);
@@ -36,13 +34,11 @@ void producer()
 	std::cout << "Finished producer..." << std::endl;
 
 	done = true;
-
 }
 
 void consumer()
 {
 	std::cout << "Starting consumer..." << std::endl;
-
 
 	while (!done)
 	{
